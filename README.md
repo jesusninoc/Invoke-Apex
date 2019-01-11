@@ -291,7 +291,7 @@ Several commands to assist in obtaining credentials from the target host.
 
 ```-PuttyKeys```  (Dumps any saved putty sessions/keys/passwords)
 
-```-CopySAM```    (Utilizes Volume Shadow Copy to copy the SAM and SYSTEM files for offline parsing.)
+```-CopySAM```    (Utilizes Volume Shadow Copy to copy the SAM, SYSTEM and SECURITY files for offline parsing.)
 
 ```-CopyNtds```   (Utilizes Volume Shadow Copy to copy the NTDS.dit and SYSTEM files for offline parsing.)
 
