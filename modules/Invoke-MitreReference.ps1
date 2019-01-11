@@ -49,7 +49,12 @@ param (
    Mitre ATT&CK Ref: T1047 (Windows Management Instrumentation)    
    Mitre ATT&CK Ref: T1220 (XSL Script Processing)                 
    Mitre ATT&CK Ref: T1028 (Windows Remote Management)             
-   Mitre ATT&CK Ref: T1218 (Signed Binary Proxy Execution)  
+   Mitre ATT&CK Ref: T1218 (Signed Binary Proxy Execution)
+   
+   
+   Module: Invoke-Exfil
+   --------------------
+   Mitre ATT&CK Ref: T1132 (Data Encoding)
    
                                                                    
    Module: Invoke-Persistence
@@ -368,6 +373,15 @@ param (
    Modules using Mitre ATT&CK Ref: T1122 (Component Object Model Hijacking):
    
    [+] Module: Invoke-PrivEsc
+   
+"@
+	}
+	elseif ($Tid -eq "1132") {
+		Write @"
+
+   Modules using Mitre ATT&CK Ref: T1132 (Data Encoding):
+   
+   [+] Module: Invoke-Exfil
    
 "@
 	}
