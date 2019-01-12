@@ -19,6 +19,7 @@ param (
 	[Switch]$Os,
 	[Switch]$Env,
 	[Switch]$Drives,
+	[Switch]$Users,
 	[Switch]$LocalAdmins,
 	[Switch]$DomainAdmins,
 	[Switch]$Privs,
@@ -54,6 +55,7 @@ param (
  Example: Invoke-Sysinfo -os | Out-File C:\temp\os.txt
  Example: Invoke-Sysinfo -env
  Example: Invoke-Sysinfo -LangMode
+ Example: Invoke-Sysinfo -PsHistory |Select-String "password"
  
  SYSINFO Command List:
  ---------------------
@@ -61,6 +63,7 @@ param (
  | -Os             (Displays Basic Operating System Information)       |
  | -Env            (Displays Environment Variables Information)        |
  | -Drives         (Displays current drives)                           |
+ | -Users          (Displays Users)                                    |
  | -LocalAdmins    (Displays local admins)                             |
  | -DomainAdmins   (Displays Domain Admins)                            |
  | -Privs          (Displays current user privileges)                  |
@@ -93,21 +96,24 @@ param (
 		get-wmiobject win32_operatingsystem | Select-Object Caption, Version, OSArchitecture, ServicePackMajorVersion, ServicePackMinorVersion, MUILanguages, LastBootUpTime, LocalDateTime, NumberOfUsers, SystemDirectory
 		$h
 	}
-	
 	elseif ($env) {
 		$h = "`n### Invoke-Sysinfo(env) ###`n"
 		$h
 		Get-ChildItem Env: | ft Key,Value
 		$h
 	}
-	
 	elseif ($drives) {
 		$h = "`n### Invoke-Sysinfo(drives) ###`n"
 		$h
 		Get-PSDrive | where {$_.Provider -like 'Microsoft.PowerShell.Core\FileSystem'}| ft Name,Root
 		$h
 	}
-	
+	elseif ($Users) {
+		$h = "`n### Invoke-Sysinfo(Users) ###`n"
+		$h
+		Get-WmiObject -Class Win32_UserAccount -Filter  "LocalAccount='True'" | select name, fullname
+		$h 
+	}
 	elseif ($LocalAdmins) {
 		$h = "`n### Invoke-Sysinfo(LocalAdmins) ###`n"
 		$h
@@ -299,6 +305,7 @@ param (
 		(Invoke-Sysinfo -Os | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -Env | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -Drives | out-file $env:temp\sysinfo.txt -Append)
+		(Invoke-Sysinfo -Users | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -LocalAdmins | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -DomainAdmins | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -Privs | out-file $env:temp\sysinfo.txt -Append)
@@ -314,7 +321,7 @@ param (
 		(Invoke-Sysinfo -LangMode | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -PsVersion | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -DnsCache | out-file $env:temp\sysinfo.txt -Append)
-    	(Invoke-Sysinfo -PsHistory | out-file $env:temp\sysinfo.txt -Append)
+		(Invoke-Sysinfo -PsHistory | out-file $env:temp\sysinfo.txt -Append)
     	(Invoke-Sysinfo -ClipBoard | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -IpConfig | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -NetStat | out-file $env:temp\sysinfo.txt -Append)
