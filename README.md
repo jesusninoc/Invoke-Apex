@@ -364,7 +364,7 @@ Allows for moving files off of a target system to a remote system.
 #### Available Commands:
 ```-SmbExfil``` (Copies a local file over SMB to a remote SMB Listener.)
 
-```-RestMethod``` (Uses PowerShell's "Invoke-RestMethod" "POST" to encode and send a file to an attacker-controlled web server.)
+```-RestExfil``` (Uses PowerShell's "Invoke-RestMethod" "POST" to encode and send a file to an attacker-controlled web server.)
 
 ## Invoke-GlassWireExceptions
 Dumps any program exceptions configured in GlassWire Endpoint Protection software.
