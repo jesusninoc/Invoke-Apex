@@ -55,6 +55,8 @@ param (
    Module: Invoke-Exfil
    --------------------
    Mitre ATT&CK Ref: T1132 (Data Encoding)
+   Mitre ATT&CK Ref: T1020 (Automated Exfiltration)
+   Mitre ATT&CK Ref: T1048 (Exfiltration over Alternative Protocol)
    
                                                                    
    Module: Invoke-Persistence
@@ -156,6 +158,15 @@ param (
    
 "@
 	}
+	elseif ($Tid -eq "1020") {
+		Write @"
+		
+   Modules using Mitre ATT&CK Ref: T1020 (Automated Exfiltration):
+   
+   [+] Module: Invoke-Exfil
+   
+"@
+	}
 	elseif ($Tid -eq "1028") {
 		Write @"
 		
@@ -189,6 +200,15 @@ param (
    Modules using Mitre ATT&CK Ref: T1047 (Windows Management Instrumentation):
    
    [+] Module: Invoke-Execute
+   
+"@
+	}
+	elseif ($Tid -eq "1048") {
+		Write @"
+
+   Modules using Mitre ATT&CK Ref: T1048 (Exfiltration over Alternative Protocol):
+   
+   [+] Module: Invoke-Exfil
    
 "@
 	}
