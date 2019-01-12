@@ -13,8 +13,6 @@ param (
 	[String]$LocalFile3=[String]$LocalFIle
 )
 
-$Rs1 = (-join ((65..90) + (97..122) | Get-Random -Count 16 | foreach {[char]$_}))
-
 	if ($Help -eq $True) {
 		Write @"
 		
