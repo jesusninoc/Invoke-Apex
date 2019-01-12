@@ -366,6 +366,9 @@ Allows for moving files off of a target system to a remote system.
 
 ```-RestExfil``` (Uses PowerShell's "Invoke-RestMethod" "POST" to encode and send a file to an attacker-controlled web server.)
 
+```-TransferShExfil``` (Uploads a file to the https://transfer.sh file upload service. A URL to the file will be returned and is valid for 14 days. "Invoke-WebRequest" and PUT is utilized for this function.)
+
+
 ## Invoke-GlassWireExceptions
 Dumps any program exceptions configured in GlassWire Endpoint Protection software.
 
