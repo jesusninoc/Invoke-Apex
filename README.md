@@ -398,6 +398,8 @@ Gathers information about a system.
 
 ```-Drives```         (Displays current drives)
 
+```-Users```          (Displays Users)
+
 ```-LocalAdmins```    (Displays local admins) 
 
 ```-DomainAdmins```   (Displays Domain Admins)
