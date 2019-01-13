@@ -1,12 +1,40 @@
 function Invoke-MitreReference {
+<# 
+
+.SYNOPSIS
+	Shows a list of Mitre ATT&CK Techniques in use througout the toolkit.
+
+.PARAMETER Help
+	Shows Detailed Help.
+
+.PARAMETER List
+	Shows Brief Command Help.
+
+.PARAMETER Tid
+	Parameter to find in which modules specific Mitre ATT&CK Techniques are in use. Takes a Technique ID number as a value.
+
+.EXAMPLE 
+	PS> Invoke-MitreReference -List
+	
+.EXAMPLE
+	PS> Invoke-MitreReference -Tid 1086
+	
+.NOTES
+	Author: Fabrizio Siciliano (@0rbz_)
+
+#>
+
 [CmdletBinding()]
 param (
 	[Parameter(Position=1)]
 	[Switch]$Help,
+	[Switch]$List,
+	
+	[Parameter(Mandatory = $False)]
 	[String]$Tid
 )
 	
-	if ($Help -eq $True) {
+	if ($Help -or $List) {
 		Write @"
 
  |------------------------------------------------------------------|
