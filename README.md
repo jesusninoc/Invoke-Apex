@@ -325,6 +325,8 @@ Execute commands on a target system using a number of different "living-off-the-
 
 ```-DownloadString``` (Executes a remote powershell script in memory using the "DownloadString" method.)
 
+```-XmlHTTP``` (Executes a remote powershell script in memory using Msxml2.XMLHTTP COM Object.)
+
 ```-RunDLL``` (Executes system commands or arbitrary code using a number of different "rundll32" methods.)
 
 Available ```Invoke-Execute -Rundll``` methods:
