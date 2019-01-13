@@ -124,7 +124,7 @@ param (
 
    [*] Description: Utilizes Volume Shadow Copy to copy the SAM, SYSTEM
        and SECURITY files from C:\windows\system32\config. These can be 
-	   parsed offline.
+       parsed offline.
 
    [*] Usage: Invoke-Creds -CopySAM -Dest C:\temp\
    
