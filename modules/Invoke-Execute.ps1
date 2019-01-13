@@ -280,7 +280,7 @@ $Rs3 = (-join ((65..90) + (97..122) | Get-Random -Count 9 | foreach {[char]$_}))
        Available SignedProxyExe Methods:
 
         [1] pcalua.exe
-		[2] SynTPEnh.exe
+        [2] SynTPEnh.exe
 		
    [*] Mitre ATT&CK Ref: T1218 (Signed Binary Proxy Execution)
 		
