@@ -364,15 +364,16 @@ Available ```Invoke-Execute -SignedProxyDll``` methods:
 Available ```Invoke-Execute -SignedProxyExe``` methods:
 
 ```
-       [1] pcalua.exe 
+       [1] pcalua.exe
+	   [2] SynTPEnh.exe
 ```	   
 
 ## Invoke-Exfil
 Allows for moving files off of a target system to a remote system.
 #### Available Commands:
-```-SmbExfil``` (Copies a local file over SMB to a remote SMB Listener.)
+```-SmbExfil``` (Copies a local file over SMB to a remote SMB Server/Share.)
 
-```-RestExfil``` (Uses PowerShell's "Invoke-RestMethod" "POST" to encode and send a file to an attacker-controlled web server.)
+```-RestExfil``` (Uses PowerShell's "Invoke-RestMethod" "POST" to Base64 encode and send a file to an attacker-controlled web server.)
 
 ```-TransferShExfil``` (Uploads a file to the https://transfer.sh file upload service. A URL to the file will be returned and is valid for 14 days. "Invoke-WebRequest" and PUT is utilized for this function.)
 
